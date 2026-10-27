@@ -1,0 +1,59 @@
+name: Base de données
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Tapez MIGRATE pour appliquer les migrations PostgreSQL"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-migrate
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Migrations PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - name: Vérifier la confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          if [ "$CONFIRMATION" != "MIGRATE" ]; then
+            echo "::error::Tapez MIGRATE dans le champ de confirmation."
+            exit 1
+          fi
+
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Vérifier le secret DATABASE_URL
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::Ajoutez le secret de dépôt DATABASE_URL (Settings → Secrets and variables → Actions) avec l'URL Session pooler Supabase (port 5432)."
+            exit 1
+          fi
+
+      - name: Installer les dépendances
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Appliquer les migrations PostgreSQL
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npm run pg:deploy

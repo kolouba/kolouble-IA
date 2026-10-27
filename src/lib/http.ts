@@ -13,11 +13,85 @@ export class ApiError extends Error {
   }
 }
 
+interface DatabaseErrorInfo {
+  status: number;
+  code: string;
+  message: string;
+}
+
+const DATABASE_ERRORS: Record<string, DatabaseErrorInfo> = {
+  P1000: {
+    status: 503,
+    code: "database_auth",
+    message: "Connexion à la base refusée : vérifiez les identifiants de DATABASE_URL.",
+  },
+  P1001: {
+    status: 503,
+    code: "database_unreachable",
+    message: "Base de données injoignable : vérifiez DATABASE_URL et l'accès réseau à Supabase.",
+  },
+  P1002: {
+    status: 504,
+    code: "database_timeout",
+    message: "Délai de connexion à la base dépassé. Réessayez dans un instant.",
+  },
+  P1003: {
+    status: 500,
+    code: "database_missing",
+    message: "La base de données indiquée n'existe pas.",
+  },
+  P1008: {
+    status: 504,
+    code: "database_timeout",
+    message: "La base de données ne répond pas. Réessayez dans un instant.",
+  },
+  P1017: {
+    status: 503,
+    code: "database_closed",
+    message: "Connexion à la base interrompue. Réessayez dans un instant.",
+  },
+  P2021: {
+    status: 503,
+    code: "database_schema_missing",
+    message:
+      "Base non initialisée : appliquez les migrations PostgreSQL (workflow « Base de données » ou npm run pg:deploy).",
+  },
+  P2022: {
+    status: 503,
+    code: "database_schema_outdated",
+    message: "Schéma de base obsolète : appliquez les migrations PostgreSQL.",
+  },
+};
+
+export function describeDatabaseError(error: unknown): DatabaseErrorInfo | null {
+  if (!error || typeof error !== "object") return null;
+  const record = error as { code?: unknown; name?: unknown };
+  if (typeof record.code === "string" && DATABASE_ERRORS[record.code]) {
+    return DATABASE_ERRORS[record.code]!;
+  }
+  if (record.name === "PrismaClientInitializationError") {
+    return {
+      status: 503,
+      code: "database_unavailable",
+      message: "Base de données indisponible : vérifiez DATABASE_URL sur Vercel.",
+    };
+  }
+  return null;
+}
+
 export function jsonError(error: unknown): NextResponse {
   if (error instanceof ApiError) {
     return NextResponse.json(
       { error: error.message, code: error.code },
       { status: error.status },
+    );
+  }
+  const database = describeDatabaseError(error);
+  if (database) {
+    console.error("[kolouble] database error", error);
+    return NextResponse.json(
+      { error: database.message, code: database.code },
+      { status: database.status },
     );
   }
   console.error("[kolouble] unexpected error", error);

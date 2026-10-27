@@ -273,7 +273,10 @@ Git de Vercel :
      `FACEBOOK_CLIENT_ID` / `FACEBOOK_CLIENT_SECRET`, `GITHUB_CLIENT_ID` /
      `GITHUB_CLIENT_SECRET`, clés IA, `FIGMA_TOKEN`.
 4. Appliquez les migrations PostgreSQL avant le premier déploiement
-   (`npm run pg:deploy`, étape 2 ci-dessus).
+   (`npm run pg:deploy`, étape 2 ci-dessus) **ou** ajoutez le secret de dépôt
+   `DATABASE_URL` (URL **Session pooler** Supabase, port 5432) puis lancez le
+   workflow **Base de données** dans l'onglet Actions avec la confirmation
+   `MIGRATE`.
 5. Chaque push sur `main` redéploie automatiquement. Après l'ajout du domaine,
    mettez à jour `AUTH_URL` et `NEXT_PUBLIC_APP_URL` puis relancez un
    déploiement.
@@ -381,6 +384,8 @@ que GET/HEAD, interdit les liens symboliques, ajoute une CSP sans réseau,
 | Aperçu vide | Regénérez le projet ; vérifiez la CSP dans la console |
 | Connexion impossible en production | `AUTH_URL`, `AUTH_TRUST_HOST` et DNS |
 | Conteneur bloqué au démarrage | `AUTH_SECRET` absent ou volume `/data` non inscriptible |
+| Inscription en production : « Base non initialisée » | Lancez le workflow **Base de données** (secret `DATABASE_URL`, confirmation `MIGRATE`) ou `npm run pg:deploy` |
+| `/api/health` renvoie `schema: missing` | Migrations PostgreSQL non appliquées |
 | Permission refusée sur le volume Docker | Adaptez les droits du volume à l'UID 1001 |
 
 ---

@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   ApiError,
   assertSameOrigin,
+  describeDatabaseError,
   getClientIp,
   isPrismaError,
   jsonError,
@@ -32,6 +33,37 @@ describe("ApiError et jsonError", () => {
     expect(body.code).toBe("internal_error");
     expect(body.error).not.toContain("base de données");
     expect(spy).toHaveBeenCalled();
+  });
+
+  it("traduit une base non migrée en message actionnable", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const response = jsonError({ code: "P2021" });
+    expect(response.status).toBe(503);
+    const body = await response.json();
+    expect(body.code).toBe("database_schema_missing");
+    expect(body.error).toContain("migrations PostgreSQL");
+    expect(spy).toHaveBeenCalled();
+  });
+
+  it("traduit une base injoignable", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const response = jsonError({ name: "PrismaClientInitializationError", message: "Can't reach database server" });
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toMatchObject({ code: "database_unavailable" });
+    expect(spy).toHaveBeenCalled();
+  });
+});
+
+describe("describeDatabaseError", () => {
+  it("reconnaît les codes Prisma connus", () => {
+    expect(describeDatabaseError({ code: "P1001" })?.code).toBe("database_unreachable");
+    expect(describeDatabaseError({ code: "P2022" })?.code).toBe("database_schema_outdated");
+  });
+
+  it("ignore les erreurs non liées à la base", () => {
+    expect(describeDatabaseError(new Error("boom"))).toBeNull();
+    expect(describeDatabaseError({ code: "P2002" })).toBeNull();
+    expect(describeDatabaseError(null)).toBeNull();
   });
 });
 
