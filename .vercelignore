@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+.next
+node_modules
+workspace
+prisma/sqlite/*.db
+prisma/sqlite/*.db-*
+tests/.workspace
+coverage
+sandbox/site
+*.log
+*.tsbuildinfo

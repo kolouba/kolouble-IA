@@ -255,6 +255,39 @@ migration n'est exécutée en CI.** Les rapports sont envoyés à Codecov
    enregistrements DNS demandés (A/CNAME). Mettez à jour `AUTH_URL` et
    `NEXT_PUBLIC_APP_URL` avec `https://votre-domaine`.
 
+### Déploiement automatique depuis GitHub
+
+Le dépôt `https://github.com/kolouba/kolouble-IA` est prêt pour l'intégration
+Git de Vercel :
+
+1. Sur [vercel.com/new](https://vercel.com/new), importez
+   `kolouba/kolouble-IA` (branche de production : `main`).
+2. Conservez le preset **Next.js** : `vercel.json` impose `npm ci`,
+   `npm run build:vercel` (client Prisma PostgreSQL) et la région `cdg1`.
+3. Dans **Settings → Environment Variables**, ajoutez pour Production et
+   Preview :
+   - obligatoires : `DATABASE_URL` (Supabase, port 6543,
+     `pgbouncer=true`), `AUTH_SECRET` (`openssl rand -base64 32`),
+     `AUTH_TRUST_HOST=true`, `AUTH_URL`, `NEXT_PUBLIC_APP_URL` ;
+   - facultatives : `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`,
+     `FACEBOOK_CLIENT_ID` / `FACEBOOK_CLIENT_SECRET`, `GITHUB_CLIENT_ID` /
+     `GITHUB_CLIENT_SECRET`, clés IA, `FIGMA_TOKEN`.
+4. Appliquez les migrations PostgreSQL avant le premier déploiement
+   (`npm run pg:deploy`, étape 2 ci-dessus).
+5. Chaque push sur `main` redéploie automatiquement. Après l'ajout du domaine,
+   mettez à jour `AUTH_URL` et `NEXT_PUBLIC_APP_URL` puis relancez un
+   déploiement.
+
+`.vercelignore` exclut les secrets, bases SQLite, journaux et espaces de
+travail locaux de l'envoi vers Vercel.
+
+En ligne de commande, après `npx vercel login` :
+
+~~~bash
+npx vercel link
+npx vercel --prod
+~~~
+
 Sur Vercel, le miroir disque `WORKSPACE_ROOT` est désactivé : la base de données
 reste la source de vérité, l'export ZIP est généré à la demande.
 

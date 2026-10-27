@@ -62,8 +62,10 @@ jobs:
       - name: Tests et couverture
         run: npm run coverage
 
-      - name: Build de production
-        run: npm run build
+      - name: Build de production (comme Vercel)
+        run: npm run build:vercel
+        env:
+          DATABASE_URL: "postgresql://prisma:prisma@localhost:5432/prisma"
 
       - name: Publier le rapport de couverture
         if: always()
