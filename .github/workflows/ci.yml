@@ -50,7 +50,7 @@ jobs:
       - name: Valider les schémas Prisma
         run: |
           npx prisma validate --schema prisma/sqlite/schema.prisma
-          npx prisma validate --schema prisma/postgres/schema.prisma
+          DATABASE_URL="postgresql://prisma:prisma@localhost:5432/prisma" npx prisma validate --schema prisma/postgres/schema.prisma
 
       - name: Lint
         run: npm run lint
