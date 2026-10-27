@@ -35,6 +35,7 @@ export async function GET() {
     schema,
     ...(databaseIssue ? { databaseIssue } : {}),
     databaseUrlConfigured: Boolean(process.env.DATABASE_URL),
+    authSecretConfigured: Boolean(process.env.AUTH_SECRET),
     ...(diagnosis ? { hint: diagnosis.message } : {}),
     ollama: { baseUrl: env.ollamaBaseUrl, configuredModel: env.defaultModel },
     runtime: env.isVercel ? "vercel" : "self-hosted",
