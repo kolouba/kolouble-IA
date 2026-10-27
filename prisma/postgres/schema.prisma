@@ -2,7 +2,8 @@
 // Utilisation : npm run pg:generate && npm run pg:deploy (DATABASE_URL Supabase).
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {

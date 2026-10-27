@@ -15,7 +15,12 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ["@prisma/client", "archiver", "bcryptjs"],
   outputFileTracingIncludes: {
-    "/api/projects/**": ["./prisma/sqlite/**"],
+    "/api/**": [
+      "./node_modules/.prisma/client/**/*",
+      "./node_modules/@prisma/client/**/*",
+      "./prisma/sqlite/**",
+      "./prisma/postgres/**",
+    ],
   },
   async headers() {
     return [

@@ -386,6 +386,11 @@ que GET/HEAD, interdit les liens symboliques, ajoute une CSP sans réseau,
 | Conteneur bloqué au démarrage | `AUTH_SECRET` absent ou volume `/data` non inscriptible |
 | Inscription en production : « Base non initialisée » | Lancez le workflow **Base de données** (secret `DATABASE_URL`, confirmation `MIGRATE`) ou `npm run pg:deploy` |
 | `/api/health` renvoie `schema: missing` | Migrations PostgreSQL non appliquées |
+| `/api/health` renvoie `databaseIssue: url_missing` | `DATABASE_URL` absente sur Vercel (Production **et** Preview), puis redéployez |
+| `/api/health` renvoie `databaseIssue: url_invalid` | Utilisez la chaîne Supabase **Transaction pooler** (port 6543, `pgbouncer=true`) |
+| `/api/health` renvoie `databaseIssue: network` ou `timeout` | Vérifiez l'accès réseau Supabase et la mise en veille du projet |
+| `/api/health` renvoie `databaseIssue: auth` | Régénérez le mot de passe de la base dans Supabase et mettez à jour `DATABASE_URL` |
+| `/api/health` renvoie `databaseIssue: engine` | Redéployez : `npm run build:vercel` régénère le client PostgreSQL (`rhel-openssl-3.0.x`) |
 | Permission refusée sur le volume Docker | Adaptez les droits du volume à l'UID 1001 |
 
 ---

@@ -13,70 +13,135 @@ export class ApiError extends Error {
   }
 }
 
+export type DatabaseIssue =
+  | "url_missing"
+  | "url_invalid"
+  | "auth"
+  | "network"
+  | "timeout"
+  | "engine"
+  | "schema_missing"
+  | "schema_outdated"
+  | "database_missing"
+  | "closed"
+  | "unavailable";
+
 interface DatabaseErrorInfo {
   status: number;
   code: string;
+  issue: DatabaseIssue;
   message: string;
 }
 
-const DATABASE_ERRORS: Record<string, DatabaseErrorInfo> = {
-  P1000: {
+const DATABASE_DIAGNOSIS: Record<DatabaseIssue, Omit<DatabaseErrorInfo, "issue">> = {
+  url_missing: {
+    status: 503,
+    code: "database_url_missing",
+    message:
+      "DATABASE_URL est absente sur Vercel : ajoutez la chaîne de connexion Supabase (Production et Preview), puis redéployez.",
+  },
+  url_invalid: {
+    status: 503,
+    code: "database_url_invalid",
+    message:
+      "DATABASE_URL est invalide : utilisez la chaîne Supabase « Transaction pooler » (port 6543, pgbouncer=true).",
+  },
+  auth: {
     status: 503,
     code: "database_auth",
     message: "Connexion à la base refusée : vérifiez les identifiants de DATABASE_URL.",
   },
-  P1001: {
+  network: {
     status: 503,
     code: "database_unreachable",
     message: "Base de données injoignable : vérifiez DATABASE_URL et l'accès réseau à Supabase.",
   },
-  P1002: {
+  timeout: {
     status: 504,
     code: "database_timeout",
     message: "Délai de connexion à la base dépassé. Réessayez dans un instant.",
   },
-  P1003: {
-    status: 500,
-    code: "database_missing",
-    message: "La base de données indiquée n'existe pas.",
-  },
-  P1008: {
-    status: 504,
-    code: "database_timeout",
-    message: "La base de données ne répond pas. Réessayez dans un instant.",
-  },
-  P1017: {
+  engine: {
     status: 503,
-    code: "database_closed",
-    message: "Connexion à la base interrompue. Réessayez dans un instant.",
+    code: "database_engine_missing",
+    message:
+      "Moteur Prisma absent du déploiement Vercel : relancez un déploiement (npm run build:vercel génère le client PostgreSQL).",
   },
-  P2021: {
+  schema_missing: {
     status: 503,
     code: "database_schema_missing",
     message:
       "Base non initialisée : appliquez les migrations PostgreSQL (workflow « Base de données » ou npm run pg:deploy).",
   },
-  P2022: {
+  schema_outdated: {
     status: 503,
     code: "database_schema_outdated",
     message: "Schéma de base obsolète : appliquez les migrations PostgreSQL.",
   },
+  database_missing: {
+    status: 500,
+    code: "database_missing",
+    message: "La base de données indiquée n'existe pas : vérifiez le nom de la base dans DATABASE_URL.",
+  },
+  closed: {
+    status: 503,
+    code: "database_closed",
+    message: "Connexion à la base interrompue. Réessayez dans un instant.",
+  },
+  unavailable: {
+    status: 503,
+    code: "database_unavailable",
+    message: "Base de données indisponible : consultez /api/health et les logs Vercel.",
+  },
 };
 
-export function describeDatabaseError(error: unknown): DatabaseErrorInfo | null {
+const CODE_ISSUES: Record<string, DatabaseIssue> = {
+  P1000: "auth",
+  P1001: "network",
+  P1002: "timeout",
+  P1003: "database_missing",
+  P1008: "timeout",
+  P1017: "closed",
+  P2021: "schema_missing",
+  P2022: "schema_outdated",
+};
+
+function withIssue(issue: DatabaseIssue): DatabaseErrorInfo {
+  return { ...DATABASE_DIAGNOSIS[issue], issue };
+}
+
+export function classifyDatabaseIssue(error: unknown): DatabaseIssue | null {
   if (!error || typeof error !== "object") return null;
-  const record = error as { code?: unknown; name?: unknown };
-  if (typeof record.code === "string" && DATABASE_ERRORS[record.code]) {
-    return DATABASE_ERRORS[record.code]!;
+  const record = error as { code?: unknown; name?: unknown; message?: unknown };
+  if (typeof record.code === "string" && CODE_ISSUES[record.code]) {
+    return CODE_ISSUES[record.code]!;
   }
-  if (record.name === "PrismaClientInitializationError") {
-    return {
-      status: 503,
-      code: "database_unavailable",
-      message: "Base de données indisponible : vérifiez DATABASE_URL sur Vercel.",
-    };
+  if (record.name !== "PrismaClientInitializationError") return null;
+  const text = typeof record.message === "string" ? record.message.toLowerCase() : "";
+  if (/environment variable not found:\s*database_url|database_url.*(not set|not defined|missing)/.test(text)) {
+    return "url_missing";
   }
-  return null;
+  if (/(must start with|invalid (url|connection string|port)|error parsing connection string|unsupported protocol)/.test(text)) {
+    return "url_invalid";
+  }
+  if (/(password authentication failed|authentication failed|28p01|invalid credentials|invalid password)/.test(text)) {
+    return "auth";
+  }
+  if (/(query engine|could not locate.*engine|engine.*not found|enoent|unsupported platform)/.test(text)) {
+    return "engine";
+  }
+  if (/(timed out|timeout|etimedout|p1002|p1008)/.test(text)) {
+    return "timeout";
+  }
+  if (/(can't reach database server|could not connect|econnrefused|enotfound|eai_again|getaddrinfo|connection refused)/.test(text)) {
+    return "network";
+  }
+  return "unavailable";
+}
+
+export function describeDatabaseError(error: unknown): DatabaseErrorInfo | null {
+  const issue = classifyDatabaseIssue(error);
+  return issue ? withIssue(issue) : null;
 }
 
 export function jsonError(error: unknown): NextResponse {

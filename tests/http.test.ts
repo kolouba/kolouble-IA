@@ -49,7 +49,20 @@ describe("ApiError et jsonError", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const response = jsonError({ name: "PrismaClientInitializationError", message: "Can't reach database server" });
     expect(response.status).toBe(503);
-    await expect(response.json()).resolves.toMatchObject({ code: "database_unavailable" });
+    await expect(response.json()).resolves.toMatchObject({ code: "database_unreachable" });
+    expect(spy).toHaveBeenCalled();
+  });
+
+  it("traduit une variable DATABASE_URL absente", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const response = jsonError({
+      name: "PrismaClientInitializationError",
+      message: "error: Environment variable not found: DATABASE_URL.",
+    });
+    expect(response.status).toBe(503);
+    const body = await response.json();
+    expect(body.code).toBe("database_url_missing");
+    expect(body.error).toContain("DATABASE_URL");
     expect(spy).toHaveBeenCalled();
   });
 });
@@ -58,6 +71,27 @@ describe("describeDatabaseError", () => {
   it("reconnaît les codes Prisma connus", () => {
     expect(describeDatabaseError({ code: "P1001" })?.code).toBe("database_unreachable");
     expect(describeDatabaseError({ code: "P2022" })?.code).toBe("database_schema_outdated");
+  });
+
+  it("classe les erreurs d'initialisation Prisma", () => {
+    expect(
+      describeDatabaseError({ name: "PrismaClientInitializationError", message: "Can't reach database server at db" }),
+    ).toMatchObject({ issue: "network", code: "database_unreachable" });
+    expect(
+      describeDatabaseError({
+        name: "PrismaClientInitializationError",
+        message: "the URL must start with the protocol `postgresql://`",
+      }),
+    ).toMatchObject({ issue: "url_invalid", code: "database_url_invalid" });
+    expect(
+      describeDatabaseError({ name: "PrismaClientInitializationError", message: "password authentication failed for user" }),
+    ).toMatchObject({ issue: "auth", code: "database_auth" });
+    expect(
+      describeDatabaseError({
+        name: "PrismaClientInitializationError",
+        message: "Query engine library for current platform could not be found",
+      }),
+    ).toMatchObject({ issue: "engine", code: "database_engine_missing" });
   });
 
   it("ignore les erreurs non liées à la base", () => {
