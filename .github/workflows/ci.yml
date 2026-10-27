@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Qualité et couverture
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CI: "true"
+      NEXT_TELEMETRY_DISABLED: "1"
+      AUTH_SECRET: "ci-only-secret-kolouble-ia-0123456789abcdef"
+      AUTH_TRUST_HOST: "true"
+      DATABASE_URL: "file:./ci.db"
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+      OLLAMA_BASE_URL: "http://127.0.0.1:9"
+      OLLAMA_MODEL: "test-coder:latest"
+      OLLAMA_MODELS: "test-coder:latest,qwen2.5-coder:7b"
+      WORKSPACE_ROOT: "./tests/.workspace"
+
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installer les dépendances
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Générer le client Prisma
+        run: npm run prisma:generate
+
+      - name: Valider les schémas Prisma
+        run: |
+          npx prisma validate --schema prisma/sqlite/schema.prisma
+          npx prisma validate --schema prisma/postgres/schema.prisma
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Vérification TypeScript
+        run: npm run typecheck
+
+      # Les migrations ne sont jamais appliquées en CI.
+      - name: Tests et couverture
+        run: npm run coverage
+
+      - name: Build de production
+        run: npm run build
+
+      - name: Publier le rapport de couverture
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Envoyer la couverture à Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
+          fail_ci_if_error: false
+          verbose: false

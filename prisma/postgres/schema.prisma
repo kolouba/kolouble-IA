@@ -1,0 +1,120 @@
+// Schéma production — PostgreSQL (Supabase) pour Vercel ou votre propre domaine.
+// Utilisation : npm run pg:generate && npm run pg:deploy (DATABASE_URL Supabase).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  image        String?
+  passwordHash String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  projects Project[]
+}
+
+model Project {
+  id               String    @id @default(cuid())
+  name             String
+  description      String?
+  prompt           String
+  ownerId          String
+  owner            User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  status           String    @default("draft")
+  model            String?
+  provider         String?
+  mode             String    @default("standard")
+  stack            String    @default("flutter-supabase")
+  templateKey      String?
+  saas             Boolean   @default(false)
+  spec             String?
+  zipUrl           String?
+  autoNamed        Boolean   @default(true)
+  lastGenerationAt DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  files       ProjectFile[]
+  generations Generation[]
+  deployment  Deployment?
+
+  @@index([ownerId, updatedAt])
+}
+
+model Deployment {
+  id            String    @id @default(cuid())
+  projectId     String    @unique
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  target        String    @default("vercel")
+  repoName      String?
+  repositoryUrl String?
+  customDomain  String?
+  productionUrl String?
+  status        String    @default("planned")
+  checkMessage  String?
+  lastCheckAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model ProjectFile {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  path      String
+  content   String
+  language  String   @default("text")
+  bytes     Int      @default(0)
+  source    String   @default("scaffold")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, path])
+  @@index([projectId])
+}
+
+model Generation {
+  id           String    @id @default(cuid())
+  projectId    String
+  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  prompt       String
+  model        String
+  provider     String?
+  mode         String    @default("standard")
+  status       String    @default("running")
+  error        String?
+  summary      String?
+  durationMs   Int?
+  filesWritten Int       @default(0)
+  warnings     String?
+  createdAt    DateTime  @default(now())
+  completedAt  DateTime?
+
+  steps GenerationStep[]
+
+  @@index([projectId, createdAt])
+}
+
+model GenerationStep {
+  id           String     @id @default(cuid())
+  generationId String
+  generation   Generation @relation(fields: [generationId], references: [id], onDelete: Cascade)
+  agent        String
+  title        String
+  status       String     @default("pending")
+  detail       String?
+  order        Int        @default(0)
+  startedAt    DateTime?
+  finishedAt   DateTime?
+
+  @@index([generationId, order])
+}

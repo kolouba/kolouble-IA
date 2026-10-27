@@ -1,0 +1,24 @@
+coverage:
+  precision: 2
+  round: down
+  range: "60...90"
+  status:
+    project:
+      default:
+        target: 70%
+        threshold: 3%
+    patch:
+      default:
+        target: 60%
+        threshold: 5%
+
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  require_changes: true
+
+ignore:
+  - "tests/**"
+  - "prisma/**"
+  - "sandbox/**"
+  - "src/generator/templates/**"

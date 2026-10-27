@@ -1,0 +1,74 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: kolouble-ia:local
+    restart: unless-stopped
+    environment:
+      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET est requis}
+      AUTH_TRUST_HOST: "true"
+      AUTH_URL: ${AUTH_URL:-http://localhost:3000}
+      DATABASE_URL: file:/data/kolouble.db
+      WORKSPACE_ROOT: /data/workspace
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-deepseek-coder:latest}
+      OLLAMA_MODELS: ${OLLAMA_MODELS:-deepseek-coder:latest,qwen2.5-coder:7b}
+      OLLAMA_TIMEOUT_MS: ${OLLAMA_TIMEOUT_MS:-240000}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      FACEBOOK_CLIENT_ID: ${FACEBOOK_CLIENT_ID:-}
+      FACEBOOK_CLIENT_SECRET: ${FACEBOOK_CLIENT_SECRET:-}
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - kolouble-data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  sandbox:
+    build:
+      context: ./sandbox
+      dockerfile: Dockerfile
+    image: kolouble-sandbox:local
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:4300:4300"
+    volumes:
+      - ./sandbox/site:/site:ro
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  caddy:
+    image: caddy:2.8-alpine
+    profiles: ["proxy"]
+    restart: unless-stopped
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:-localhost}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  kolouble-data:
+  caddy-data:
+  caddy-config:

@@ -1,0 +1,23 @@
+{
+  email {$ACME_EMAIL}
+}
+
+{$SITE_DOMAIN:localhost} {
+  encode zstd gzip
+
+  @preview path /api/preview/*
+  header @preview {
+    Cache-Control "no-store, max-age=0"
+    X-Robots-Tag "noindex, nofollow"
+  }
+
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+    -Server
+  }
+
+  reverse_proxy app:3000
+}
