@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { auth } from "@/auth";
 import { Brand } from "@/components/brand";
+import { OnBradeCredit } from "@/components/onbrade-credit";
 import { AGENTS } from "@/lib/generator/types";
 
 export const dynamic = "force-dynamic";
@@ -572,6 +573,9 @@ export default async function LandingPage() {
           <div className="mt-6 flex flex-col items-center justify-between gap-3 border-t border-white/[0.05] pt-5 sm:flex-row">
             <Brand />
             <p className="text-[11px] text-white/25">© {new Date().getFullYear()} Kôloublé IA. Le code est à vous.</p>
+          </div>
+          <div className="mt-4 text-center text-[11px] text-white/35 sm:text-right">
+            <OnBradeCredit />
           </div>
         </div>
       </footer>

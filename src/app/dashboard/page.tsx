@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AppHeader } from "@/components/app-header";
 import { DashboardClient, type DashboardProject } from "@/components/dashboard-client";
+import { OnBradeCredit } from "@/components/onbrade-credit";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { isTemplateKey } from "@/lib/spec";
@@ -71,9 +72,14 @@ export default async function DashboardPage({
         figmaEnabled={env.figmaEnabled}
         userName={userName}
       />
-      <footer className="container-page flex items-center justify-between border-t border-white/[0.05] py-6 text-[10.5px] text-white/20">
-        <span>Kôloublé IA · studio local</span>
-        <span>Ollama · Flutter · Supabase</span>
+      <footer className="container-page border-t border-white/[0.05] py-6 text-[10.5px] text-white/20">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span>Kôloublé IA · studio local</span>
+          <span>Ollama · Flutter · Supabase</span>
+        </div>
+        <div className="mt-3 text-white/35">
+          <OnBradeCredit />
+        </div>
       </footer>
     </>
   );

@@ -3,6 +3,7 @@ import { LockKeyhole } from "lucide-react";
 import { auth } from "@/auth";
 import { AuthForm } from "@/components/auth-form";
 import { AuthShell } from "@/components/auth-shell";
+import { OnBradeCredit } from "@/components/onbrade-credit";
 import { env } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
@@ -34,9 +35,12 @@ export default async function LoginPage({
       title="Bon retour au studio"
       subtitle="Connectez-vous pour retrouver vos applications et lancer une nouvelle génération."
       footer={
-        <span className="inline-flex items-center gap-1.5 text-[11px] text-white/25">
-          <LockKeyhole className="h-3 w-3" /> Session chiffrée · 30 jours
-        </span>
+        <div className="flex flex-col items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-white/25">
+            <LockKeyhole className="h-3 w-3" /> Session chiffrée · 30 jours
+          </span>
+          <OnBradeCredit className="justify-center text-[10.5px] text-white/30" />
+        </div>
       }
     >
       <AuthForm mode="login" providers={providers} next={params.next} initialError={initialError} />

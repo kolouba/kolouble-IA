@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Brand } from "@/components/brand";
+import { OnBradeCredit } from "@/components/onbrade-credit";
 
 export function SiteFooter() {
   return (
@@ -31,9 +32,14 @@ export function SiteFooter() {
           </div>
         </div>
       </div>
-      <div className="container-page mt-10 flex flex-col items-start justify-between gap-3 border-t border-white/[0.05] pt-6 text-[10.5px] text-white/20 sm:flex-row sm:items-center">
-        <span>© {new Date().getFullYear()} Kôloublé IA. Le code est à vous.</span>
-        <span>Flutter · Supabase · Hive · Ollama · Vercel · Docker</span>
+      <div className="container-page mt-10 border-t border-white/[0.05] pt-6">
+        <div className="flex flex-col items-start justify-between gap-2 text-[10.5px] text-white/20 sm:flex-row sm:items-center">
+          <span>© {new Date().getFullYear()} Kôloublé IA. Le code est à vous.</span>
+          <span>Flutter · Supabase · Hive · Ollama · Vercel · Docker</span>
+        </div>
+        <div className="mt-3 text-[10.5px] text-white/35">
+          <OnBradeCredit />
+        </div>
       </div>
     </footer>
   );

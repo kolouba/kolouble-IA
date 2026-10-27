@@ -388,3 +388,7 @@ que GET/HEAD, interdit les liens symboliques, ajoute une CSP sans réseau,
 Généré et maintenu pour un usage local et auto-hébergé. Les applications
 produites restent votre propriété ; relisez toujours le code généré avant une
 mise en production.
+
+---
+
+Propulsé par [On-Brade.Com](https://www.on-brade.com) · +225 07 47 70 04 04 · 05 55 56 57 80

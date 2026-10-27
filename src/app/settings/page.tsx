@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AppHeader } from "@/components/app-header";
+import { OnBradeCredit } from "@/components/onbrade-credit";
 import { SettingsClient } from "@/components/settings-client";
 import { env } from "@/lib/env";
 
@@ -27,9 +28,14 @@ export default async function SettingsPage() {
         defaultModel={env.defaultModel}
         isVercel={env.isVercel}
       />
-      <footer className="container-page flex items-center justify-between border-t border-white/[0.05] py-6 text-[10.5px] text-white/20">
-        <span>Kôloublé IA · paramètres</span>
-        <span>Sécurité · conformité · stockage</span>
+      <footer className="container-page border-t border-white/[0.05] py-6 text-[10.5px] text-white/20">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span>Kôloublé IA · paramètres</span>
+          <span>Sécurité · conformité · stockage</span>
+        </div>
+        <div className="mt-3 text-white/35">
+          <OnBradeCredit />
+        </div>
       </footer>
     </>
   );

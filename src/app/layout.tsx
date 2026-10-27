@@ -25,7 +25,9 @@ export const metadata: Metadata = {
     "Vercel",
     "Docker",
   ],
-  authors: [{ name: "Kôloublé IA" }],
+  authors: [{ name: "On-Brade.Com", url: "https://www.on-brade.com" }],
+  creator: "On-Brade.Com",
+  publisher: "On-Brade.Com",
   openGraph: {
     title: "Kôloublé IA — De l'idée à l'application Flutter complète",
     description: "De l'idée à l'application Flutter complète, pilotée par votre IA locale.",
