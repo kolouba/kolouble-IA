@@ -131,7 +131,7 @@ Copiez `.env.example` vers `.env`. Ne commitez jamais `.env`.
 | Variable | Obligatoire | Description |
 | --- | --- | --- |
 | `AUTH_SECRET` | Oui | Secret NextAuth (32 octets aléatoires) |
-| `DATABASE_URL` | Oui | `file:./dev.db` en local, URL Supabase en production |
+| `DATABASE_URL` | Oui | `file:./dev.db` en local ; en production, `DATABASE_URL` ou les variables `POSTGRES_PRISMA_URL` / `POSTGRES_URL` injectées par l'intégration Supabase de Vercel |
 | `AUTH_URL` | Production | URL publique exacte du studio |
 | `AUTH_TRUST_HOST` | Derrière proxy | `true` pour Vercel, Docker, Caddy |
 | `OLLAMA_BASE_URL` | Non | Par défaut `http://localhost:11434` |
@@ -272,6 +272,9 @@ Git de Vercel :
    - facultatives : `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`,
      `FACEBOOK_CLIENT_ID` / `FACEBOOK_CLIENT_SECRET`, `GITHUB_CLIENT_ID` /
      `GITHUB_CLIENT_SECRET`, clés IA, `FIGMA_TOKEN`.
+   - alternative : connectez une base via **Storage → Create Database →
+     Supabase** ; l'intégration injecte `POSTGRES_PRISMA_URL` / `POSTGRES_URL`,
+     acceptées automatiquement par l'application.
 4. Appliquez les migrations PostgreSQL avant le premier déploiement
    (`npm run pg:deploy`, étape 2 ci-dessus) **ou** ajoutez le secret de dépôt
    `DATABASE_URL` (URL **Session pooler** Supabase, port 5432) puis lancez le
@@ -386,7 +389,7 @@ que GET/HEAD, interdit les liens symboliques, ajoute une CSP sans réseau,
 | Conteneur bloqué au démarrage | `AUTH_SECRET` absent ou volume `/data` non inscriptible |
 | Inscription en production : « Base non initialisée » | Lancez le workflow **Base de données** (secret `DATABASE_URL`, confirmation `MIGRATE`) ou `npm run pg:deploy` |
 | `/api/health` renvoie `schema: missing` | Migrations PostgreSQL non appliquées |
-| `/api/health` renvoie `databaseIssue: url_missing` | `DATABASE_URL` absente sur Vercel (Production **et** Preview), puis redéployez |
+| `/api/health` renvoie `databaseIssue: url_missing` | Connectez une base via **Storage → Create Database → Supabase** ou ajoutez `DATABASE_URL` (Production **et** Preview), puis redéployez |
 | `/api/health` renvoie `databaseIssue: url_invalid` | Utilisez la chaîne Supabase **Transaction pooler** (port 6543, `pgbouncer=true`) |
 | `/api/health` renvoie `databaseIssue: network` ou `timeout` | Vérifiez l'accès réseau Supabase et la mise en veille du projet |
 | `/api/health` renvoie `databaseIssue: auth` | Régénérez le mot de passe de la base dans Supabase et mettez à jour `DATABASE_URL` |

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { resolveDatabaseUrl } from "@/lib/database-url";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { describeDatabaseError } from "@/lib/http";
@@ -7,6 +8,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const databaseUrl = resolveDatabaseUrl();
   let database = "ok";
   let schema = "ok";
   let databaseError: unknown = null;
@@ -34,7 +36,8 @@ export async function GET() {
     database,
     schema,
     ...(databaseIssue ? { databaseIssue } : {}),
-    databaseUrlConfigured: Boolean(process.env.DATABASE_URL),
+    databaseUrlConfigured: Boolean(databaseUrl.url),
+    ...(databaseUrl.source ? { databaseUrlSource: databaseUrl.source } : {}),
     authSecretConfigured: Boolean(process.env.AUTH_SECRET),
     ...(diagnosis ? { hint: diagnosis.message } : {}),
     ollama: { baseUrl: env.ollamaBaseUrl, configuredModel: env.defaultModel },
