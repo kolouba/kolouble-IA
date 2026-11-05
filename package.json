@@ -10,6 +10,7 @@
     "dev": "next dev",
     "build": "npm run prisma:generate && next build",
     "build:vercel": "npm run pg:generate && next build",
+    "vercel-build": "node scripts/vercel-build.mjs && npm run build:vercel",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",

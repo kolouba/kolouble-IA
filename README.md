@@ -263,7 +263,8 @@ Git de Vercel :
 1. Sur [vercel.com/new](https://vercel.com/new), importez
    `kolouba/kolouble-IA` (branche de production : `main`).
 2. Conservez le preset **Next.js** : `vercel.json` impose `npm ci`,
-   `npm run build:vercel` (client Prisma PostgreSQL) et la région `cdg1`.
+   `npm run vercel-build` (migrations PostgreSQL puis client Prisma) et la
+   région `cdg1`.
 3. Dans **Settings → Environment Variables**, ajoutez pour Production et
    Preview :
    - obligatoires : `DATABASE_URL` (Supabase, port 6543,
@@ -272,14 +273,15 @@ Git de Vercel :
    - facultatives : `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`,
      `FACEBOOK_CLIENT_ID` / `FACEBOOK_CLIENT_SECRET`, `GITHUB_CLIENT_ID` /
      `GITHUB_CLIENT_SECRET`, clés IA, `FIGMA_TOKEN`.
-   - alternative : connectez une base via **Storage → Create Database →
-     Supabase** ; l'intégration injecte `POSTGRES_PRISMA_URL` / `POSTGRES_URL`,
-     acceptées automatiquement par l'application.
-4. Appliquez les migrations PostgreSQL avant le premier déploiement
-   (`npm run pg:deploy`, étape 2 ci-dessus) **ou** ajoutez le secret de dépôt
-   `DATABASE_URL` (URL **Session pooler** Supabase, port 5432) puis lancez le
-   workflow **Base de données** dans l'onglet Actions avec la confirmation
-   `MIGRATE`.
+   - alternative recommandée : **Storage → Create Database** (Supabase ou
+     Prisma Postgres), puis **Connect** sur la base et sélectionnez ce projet.
+     L'intégration injecte `DATABASE_URL` et/ou `POSTGRES_*` ; l'application
+     les accepte automatiquement.
+4. Les migrations PostgreSQL sont appliquées **automatiquement à chaque
+   build** (`npm run vercel-build`, voir `scripts/vercel-build.mjs`) dès
+   qu'une URL de base est disponible. Pour les appliquer hors Vercel :
+   `npm run pg:deploy` ou le workflow **Base de données** (secret
+   `DATABASE_URL`, confirmation `MIGRATE`).
 5. Chaque push sur `main` redéploie automatiquement. Après l'ajout du domaine,
    mettez à jour `AUTH_URL` et `NEXT_PUBLIC_APP_URL` puis relancez un
    déploiement.
@@ -387,9 +389,9 @@ que GET/HEAD, interdit les liens symboliques, ajoute une CSP sans réseau,
 | Aperçu vide | Regénérez le projet ; vérifiez la CSP dans la console |
 | Connexion impossible en production | `AUTH_URL`, `AUTH_TRUST_HOST` et DNS |
 | Conteneur bloqué au démarrage | `AUTH_SECRET` absent ou volume `/data` non inscriptible |
-| Inscription en production : « Base non initialisée » | Lancez le workflow **Base de données** (secret `DATABASE_URL`, confirmation `MIGRATE`) ou `npm run pg:deploy` |
-| `/api/health` renvoie `schema: missing` | Migrations PostgreSQL non appliquées |
-| `/api/health` renvoie `databaseIssue: url_missing` | Connectez une base via **Storage → Create Database → Supabase** ou ajoutez `DATABASE_URL` (Production **et** Preview), puis redéployez |
+| Inscription en production : « Base non initialisée » | Redéployez (migrations automatiques) ou lancez le workflow **Base de données** / `npm run pg:deploy` |
+| `/api/health` renvoie `schema: missing` | Migrations PostgreSQL non appliquées : redéployez |
+| `/api/health` renvoie `databaseIssue: url_missing` | Sur **Storage**, cliquez **Connect** sur la base, choisissez ce projet (Production **et** Preview), puis redéployez |
 | `/api/health` renvoie `databaseIssue: url_invalid` | Utilisez la chaîne Supabase **Transaction pooler** (port 6543, `pgbouncer=true`) |
 | `/api/health` renvoie `databaseIssue: network` ou `timeout` | Vérifiez l'accès réseau Supabase et la mise en veille du projet |
 | `/api/health` renvoie `databaseIssue: auth` | Régénérez le mot de passe de la base dans Supabase et mettez à jour `DATABASE_URL` |
